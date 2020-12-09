@@ -1,13 +1,21 @@
 package main
 
 import (
+	"encoding/csv"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"log"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
 func main() {
+	split2()
+}
+
+func split1() {
 	file := "stock.csv"
 
 	data, err := ioutil.ReadFile(file)
@@ -35,40 +43,63 @@ func main() {
 	}
 }
 
-func split() {
-	//file := "stock.csv"
-	//
-	//data, err := ioutil.ReadFile(file)
-	//if err != nil {
-	//	fmt.Println(err)
-	//	os.Exit(1)
-	//}
-	//
-	//section := strings.Split(string(data), "Product Name")
-	//
-	//var combined []string
-	//
-	//for _, split := range section {
-	//	p := strings.Split(split, "\n")
-	//
-	//	if len(p) > 4 {
-	//		combined = append(combined, split)
-	//		s, _ := strconv.Atoi(f[0])
-	//
-	//		info := strings.Split(p[0], ",")
-	//		ratingLine := strings.Split(p[2], ",")
-	//		rating := strings.Split(ratingLine[0], " ")
-	//		date, _ := time.Parse("2006-01-02", dateFormatYear(info[0]))
-	//		stylist := info[2]
-	//		client := info[1]
-	//		review := strings.Trim(strings.Split(p[3], ",")[0], "\"")
-	//		ratingInt, _ := strconv.Atoi(rating[1])
-	//
-	//		if len(review) > 25 && ratingInt >= 4 {
-	//			{
-	//				reviews = append(reviews, ClientReview{Date: date, Review: review, Client: client, Stylist: stylist, Salon: s})
-	//			}
-	//		}
-	//	}
-	//}
+func split2() {
+	var err error
+	var files []string
+
+	root := "data"
+
+	err = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+		if filepath.Ext(path) != ".csv" {
+			return nil
+		}
+		files = append(files, path)
+		return nil
+	})
+	if err != nil {
+		log.Println(err)
+	}
+	for _, fileName := range files {
+		fname := strings.Split(fileName, "/")[1]
+
+		fileBytes, err := ioutil.ReadFile(fname)
+		if err != nil {
+			log.Println(err)
+		}
+
+		split := strings.SplitAfter(string(fileBytes), "\n")
+
+		var section []string
+
+		for _, line := range split {
+			if !strings.Contains(line, "Page") {
+				section = append(section, line)
+			}
+		}
+
+		joined := strings.Join(section, "")
+
+		for _, l := range joined {
+
+			s := strings.SplitAfter(string(l), "\n")
+
+			csvReady := strings.Join(s, "")
+
+			r := csv.NewReader(strings.NewReader(csvReady))
+
+			for {
+				record, err := r.Read()
+				if err == io.EOF {
+					break
+				}
+				if err != nil {
+					log.Println(err)
+				}
+				fmt.Println(record)
+			}
+		}
+	}
 }
