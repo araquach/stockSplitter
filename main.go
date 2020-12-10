@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	split2()
+	split3()
 }
 
 func split1() {
@@ -31,8 +31,8 @@ func split1() {
 	// var combined []string
 
 	for _, split := range section[2:] {
-		p := strings.Split(split, "\n")[0]
-		lineSplit := strings.Split(p, " -")
+		p := strings.Split(split, "\n")
+		lineSplit := strings.Split(p[0], " -")
 
 		supplier := lineSplit[0]
 
@@ -100,6 +100,49 @@ func split2() {
 				}
 				fmt.Println(record)
 			}
+		}
+	}
+}
+
+func split3() {
+	file := "stock.csv"
+
+	fmt.Println(file)
+
+	fileBytes, err := ioutil.ReadFile(file)
+	if err != nil {
+		log.Println(err)
+	}
+
+	sections := strings.SplitAfter(string(fileBytes), "Brand ")
+
+	for _, s := range sections[2:] {
+		split := strings.SplitAfter(s, "\n")
+
+		lineSplit := strings.Split(split[0], " -")
+
+		supplier := lineSplit[0]
+
+		csvData := split[12:len(split)-1]
+
+		csvReady := strings.Join(csvData, "")
+
+		r := csv.NewReader(strings.NewReader(csvReady))
+
+		fmt.Printf("Supplier: %v\n", supplier)
+
+		for {
+			record, err := r.Read()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Println(err)
+			}
+			product := record[0]
+			quantity := record[4]
+
+			fmt.Printf("%v - Quantity Sold: %v\n", product, quantity)
 		}
 	}
 }
