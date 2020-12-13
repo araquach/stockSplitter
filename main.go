@@ -43,6 +43,7 @@ func init() {
 func main() {
 	db := dbConn()
 	db.LogMode(true)
+	db.DropTable(&StockData{})
 	db.AutoMigrate(&StockData{})
 	db.Close()
 
