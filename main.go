@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -52,37 +53,35 @@ func main() {
 }
 
 func loadProfessional() {
+	var files []string
 	var stockTransfers []StockData
 	var err error
 
-	so := "data/stock-out/professional.csv"
+	root := "data/stock-out"
 
-	csvFile, _ := os.Open(so)
-
-	sod := csv.NewReader(bufio.NewReader(csvFile))
-
-	for {
-		sor, err := sod.Read()
-		if err == io.EOF {
-			break
+	err = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
 		}
-		if err != nil {
-			log.Println(err)
+		if filepath.Ext(path) != ".csv" {
+			return nil
 		}
+		files = append(files, path)
+		return nil
+	})
+	if err != nil {
+		log.Println(err)
+	}
 
-		if len(sor[1]) > 0 && !strings.Contains(sor[0], "Page") &&
-			!strings.Contains(sor[1], "#") &&
-			!strings.Contains(sor[0], "Total"){
-		}
+	for _, fileName := range files {
+		so := fileName
 
-		sl :="data/stock-list/professional.csv"
+		csvFile, _ := os.Open(so)
 
-		csvFile2, _ := os.Open(sl)
-
-		sld := csv.NewReader(bufio.NewReader(csvFile2))
+		sod := csv.NewReader(bufio.NewReader(csvFile))
 
 		for {
-			slr, err := sld.Read()
+			sor, err := sod.Read()
 			if err == io.EOF {
 				break
 			}
@@ -90,59 +89,76 @@ func loadProfessional() {
 				log.Println(err)
 			}
 
-			if slr[0] == sor[0] {
+			if len(sor[1]) > 0 && !strings.Contains(sor[0], "Page") &&
+				!strings.Contains(sor[1], "#") &&
+				!strings.Contains(sor[0], "Total"){
+			}
 
-				quantity, _ := strconv.Atoi(sor[1])
-				price, _ := strconv.ParseFloat(sor[2], 8)
+			sl :="data/stock-list/professional.csv"
 
-				stockTransfers = append(stockTransfers, StockData{Product: sor[0], Quantity: quantity, Price: price, Supplier: slr[1], Brand: slr[2], Category: slr[3], SubBrand: slr[4], Type: slr[5]})
+			csvFile2, _ := os.Open(sl)
 
+			sld := csv.NewReader(bufio.NewReader(csvFile2))
+
+			for {
+				slr, err := sld.Read()
+				if err == io.EOF {
+					break
+				}
+				if err != nil {
+					log.Println(err)
+				}
+
+				if slr[0] == sor[0] {
+
+					quantity, _ := strconv.Atoi(sor[1])
+					price, _ := strconv.ParseFloat(sor[2], 8)
+
+					stockTransfers = append(stockTransfers, StockData{Product: sor[0], Quantity: quantity, Price: price, Supplier: slr[1], Brand: slr[2], Category: slr[3], SubBrand: slr[4], Type: slr[5]})
+				}
 			}
 		}
-	}
-	for _, r := range stockTransfers {
-		db := dbConn()
-		db.LogMode(true)
-		db.Create(&r)
-		if err != nil {
-			log.Println(err)
+		for _, r := range stockTransfers {
+			db := dbConn()
+			db.LogMode(true)
+			db.Create(&r)
+			if err != nil {
+				log.Println(err)
+			}
+			db.Close()
 		}
-		db.Close()
 	}
 }
 
 func loadRetail() {
+	var files []string
 	var stockTransfers []StockData
 	var err error
 
-	so := "data/stock-out/retail.csv"
+	root := "data/stock-out"
 
-	csvFile, _ := os.Open(so)
-
-	sod := csv.NewReader(bufio.NewReader(csvFile))
-
-	for {
-		sor, err := sod.Read()
-		if err == io.EOF {
-			break
+	err = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
 		}
-		if err != nil {
-			log.Println(err)
+		if filepath.Ext(path) != ".csv" {
+			return nil
 		}
+		files = append(files, path)
+		return nil
+	})
+	if err != nil {
+		log.Println(err)
+	}
 
-		if len(sor[1]) > 0 && !strings.Contains(sor[0], "Page") &&
-			!strings.Contains(sor[1], "#") &&
-			!strings.Contains(sor[0], "Total"){
-		}
+	for _, fileName := range files {
 
-		sl :="data/stock-list/retail.csv"
+		csvFile, _ := os.Open(fileName)
 
-		csvFile2, _ := os.Open(sl)
-
-		sld := csv.NewReader(bufio.NewReader(csvFile2))
+		sod := csv.NewReader(bufio.NewReader(csvFile))
 
 		for {
-			slr, err := sld.Read()
+			sor, err := sod.Read()
 			if err == io.EOF {
 				break
 			}
@@ -150,23 +166,43 @@ func loadRetail() {
 				log.Println(err)
 			}
 
-			if slr[0] == sor[0] {
+			if len(sor[1]) > 0 && !strings.Contains(sor[0], "Page") &&
+				!strings.Contains(sor[1], "#") &&
+				!strings.Contains(sor[0], "Total"){
+			}
 
-				quantity, _ := strconv.Atoi(sor[4])
-				price, _ := strconv.ParseFloat(sor[1], 8)
+			sl :="data/stock-list/retail.csv"
 
-				stockTransfers = append(stockTransfers, StockData{Product: sor[0], Quantity: quantity, Price: price, Supplier: slr[1], Brand: slr[2], Category: slr[3], SubBrand: slr[4], Type: slr[5]})
+			csvFile2, _ := os.Open(sl)
 
+			sld := csv.NewReader(bufio.NewReader(csvFile2))
+
+			for {
+				slr, err := sld.Read()
+				if err == io.EOF {
+					break
+				}
+				if err != nil {
+					log.Println(err)
+				}
+
+				if slr[0] == sor[0] {
+
+					quantity, _ := strconv.Atoi(sor[4])
+					price, _ := strconv.ParseFloat(sor[1], 8)
+
+					stockTransfers = append(stockTransfers, StockData{Product: sor[0], Quantity: quantity, Price: price, Supplier: slr[1], Brand: slr[2], Category: slr[3], SubBrand: slr[4], Type: slr[5]})
+				}
 			}
 		}
-	}
-	for _, r := range stockTransfers {
-		db := dbConn()
-		db.LogMode(true)
-		db.Create(&r)
-		if err != nil {
-			log.Println(err)
+		for _, r := range stockTransfers {
+			db := dbConn()
+			db.LogMode(true)
+			db.Create(&r)
+			if err != nil {
+				log.Println(err)
+			}
+			db.Close()
 		}
-		db.Close()
 	}
 }
