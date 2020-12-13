@@ -16,6 +16,8 @@ import (
 
 type StockData struct {
 	ID int `json:"id" gorm:"primary_key"`
+	Date string `json:"date"`
+	Salon string `json:"salon"`
 	Product string `json:"product"`
 	Quantity int `json:"quantity"`
 	Price float64 `json:"price"`
@@ -49,7 +51,7 @@ func main() {
 	db.Close()
 
 	loadProfessional()
-	loadRetail()
+	// loadRetail()
 }
 
 func loadProfessional() {
@@ -57,7 +59,7 @@ func loadProfessional() {
 	var stockTransfers []StockData
 	var err error
 
-	root := "data/stock-out"
+	root := "data/stock-out/Professional"
 
 	err = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
@@ -74,9 +76,12 @@ func loadProfessional() {
 	}
 
 	for _, fileName := range files {
-		so := fileName
+		fname := strings.Split(fileName, " ")
 
-		csvFile, _ := os.Open(so)
+		salon := fname[0]
+		date := strings.Split(fname[1], ".")[0]
+
+		csvFile, _ := os.Open(fileName)
 
 		sod := csv.NewReader(bufio.NewReader(csvFile))
 
@@ -87,11 +92,6 @@ func loadProfessional() {
 			}
 			if err != nil {
 				log.Println(err)
-			}
-
-			if len(sor[1]) > 0 && !strings.Contains(sor[0], "Page") &&
-				!strings.Contains(sor[1], "#") &&
-				!strings.Contains(sor[0], "Total"){
 			}
 
 			sl :="data/stock-list/professional.csv"
@@ -114,19 +114,19 @@ func loadProfessional() {
 					quantity, _ := strconv.Atoi(sor[1])
 					price, _ := strconv.ParseFloat(sor[2], 8)
 
-					stockTransfers = append(stockTransfers, StockData{Product: sor[0], Quantity: quantity, Price: price, Supplier: slr[1], Brand: slr[2], Category: slr[3], SubBrand: slr[4], Type: slr[5]})
+					stockTransfers = append(stockTransfers, StockData{Date: date, Salon: salon, Product: sor[0], Quantity: quantity, Price: price, Supplier: slr[1], Brand: slr[2], Category: slr[3], SubBrand: slr[4], Type: slr[5]})
 				}
 			}
 		}
-		for _, r := range stockTransfers {
-			db := dbConn()
-			db.LogMode(true)
-			db.Create(&r)
-			if err != nil {
-				log.Println(err)
-			}
-			db.Close()
+	}
+	for _, r := range stockTransfers {
+		db := dbConn()
+		db.LogMode(true)
+		db.Create(&r)
+		if err != nil {
+			log.Println(err)
 		}
+		db.Close()
 	}
 }
 
@@ -135,7 +135,7 @@ func loadRetail() {
 	var stockTransfers []StockData
 	var err error
 
-	root := "data/stock-out"
+	root := "data/stock-out/Retail"
 
 	err = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
@@ -166,11 +166,6 @@ func loadRetail() {
 				log.Println(err)
 			}
 
-			if len(sor[1]) > 0 && !strings.Contains(sor[0], "Page") &&
-				!strings.Contains(sor[1], "#") &&
-				!strings.Contains(sor[0], "Total"){
-			}
-
 			sl :="data/stock-list/retail.csv"
 
 			csvFile2, _ := os.Open(sl)
@@ -195,14 +190,14 @@ func loadRetail() {
 				}
 			}
 		}
-		for _, r := range stockTransfers {
-			db := dbConn()
-			db.LogMode(true)
-			db.Create(&r)
-			if err != nil {
-				log.Println(err)
-			}
-			db.Close()
+	}
+	for _, r := range stockTransfers {
+		db := dbConn()
+		db.LogMode(true)
+		db.Create(&r)
+		if err != nil {
+			log.Println(err)
 		}
+		db.Close()
 	}
 }
