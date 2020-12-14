@@ -12,11 +12,12 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type StockData struct {
 	ID int `json:"id" gorm:"primary_key"`
-	Date string `json:"date"`
+	Date time.Time `json:"date"`
 	Salon string `json:"salon"`
 	Product string `json:"product"`
 	Quantity int `json:"quantity"`
@@ -43,6 +44,12 @@ func init() {
 	}
 }
 
+func dateFormatYear(d string) (f string) {
+	s := strings.Split(d, "-")
+	f = "20" + s[2] + "-" + s[1] + "-" + s[0]
+	return
+}
+
 func main() {
 	db := dbConn()
 	db.LogMode(true)
@@ -51,7 +58,7 @@ func main() {
 	db.Close()
 
 	loadProfessional()
-	// loadRetail()
+	loadRetail()
 }
 
 func loadProfessional() {
@@ -76,10 +83,10 @@ func loadProfessional() {
 	}
 
 	for _, fileName := range files {
-		fname := strings.Split(fileName, " ")
-
-		salon := fname[0]
-		date := strings.Split(fname[1], ".")[0]
+		fname := filepath.Base(fileName)
+		split := strings.Split(fname, " ")
+		salon := split[0]
+		date := "01-" + strings.Split(split[1], ".")[0]
 
 		csvFile, _ := os.Open(fileName)
 
@@ -110,11 +117,12 @@ func loadProfessional() {
 				}
 
 				if slr[0] == sor[0] {
-
+					formattedDate, _ := time.Parse("2006-01-02", dateFormatYear(date))
 					quantity, _ := strconv.Atoi(sor[1])
-					price, _ := strconv.ParseFloat(sor[2], 8)
+					totalPrice, _ := strconv.ParseFloat(sor[2], 8)
+					price := totalPrice / float64(quantity)
 
-					stockTransfers = append(stockTransfers, StockData{Date: date, Salon: salon, Product: sor[0], Quantity: quantity, Price: price, Supplier: slr[1], Brand: slr[2], Category: slr[3], SubBrand: slr[4], Type: slr[5]})
+					stockTransfers = append(stockTransfers, StockData{Date: formattedDate, Salon: salon, Product: sor[0], Quantity: quantity, Price: price, Supplier: slr[1], Brand: slr[2], Category: slr[3], SubBrand: slr[4], Type: slr[5]})
 				}
 			}
 		}
@@ -152,6 +160,10 @@ func loadRetail() {
 	}
 
 	for _, fileName := range files {
+		fname := filepath.Base(fileName)
+		split := strings.Split(fname, " ")
+		salon := split[0]
+		date := "01-" + strings.Split(split[1], ".")[0]
 
 		csvFile, _ := os.Open(fileName)
 
@@ -183,10 +195,11 @@ func loadRetail() {
 
 				if slr[0] == sor[0] {
 
+					formattedDate, _ := time.Parse("2006-01-02", dateFormatYear(date))
 					quantity, _ := strconv.Atoi(sor[4])
 					price, _ := strconv.ParseFloat(sor[1], 8)
 
-					stockTransfers = append(stockTransfers, StockData{Product: sor[0], Quantity: quantity, Price: price, Supplier: slr[1], Brand: slr[2], Category: slr[3], SubBrand: slr[4], Type: slr[5]})
+					stockTransfers = append(stockTransfers, StockData{Date: formattedDate, Salon: salon, Product: sor[0], Quantity: quantity, Price: price, Supplier: slr[1], Brand: slr[2], Category: slr[3], SubBrand: slr[4], Type: slr[5]})
 				}
 			}
 		}
